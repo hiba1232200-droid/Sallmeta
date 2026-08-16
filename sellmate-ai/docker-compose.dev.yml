@@ -1,0 +1,34 @@
+# بنية التطوير المحلية فقط: PostgreSQL + Redis (شغّل التطبيقات محليًا عبر npm)
+# التشغيل: docker compose -f docker-compose.dev.yml up -d
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: sellmate-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sellmate
+      POSTGRES_PASSWORD: sellmate
+      POSTGRES_DB: sellmate
+    ports:
+      - '5432:5432'
+    volumes:
+      - sellmate_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U sellmate -d sellmate']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: sellmate-redis
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes']
+    ports:
+      - '6379:6379'
+    volumes:
+      - sellmate_redis:/data
+
+volumes:
+  sellmate_pg:
+  sellmate_redis:

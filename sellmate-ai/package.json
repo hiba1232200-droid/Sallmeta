@@ -1,0 +1,33 @@
+{
+  "name": "sellmate-ai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SellMate AI — Telegram AI Sales Assistant SaaS",
+  "workspaces": [
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev:api": "npm run start:dev -w @sellmate/api",
+    "dev:dashboard": "npm run dev -w @sellmate/dashboard",
+    "dev:admin": "npm run dev -w @sellmate/admin",
+    "build": "npm run build -w @sellmate/api && npm run build -w @sellmate/dashboard && npm run build -w @sellmate/admin",
+    "build:api": "npm run build -w @sellmate/api",
+    "build:dashboard": "npm run build -w @sellmate/dashboard",
+    "build:admin": "npm run build -w @sellmate/admin",
+    "lint": "npm run lint -w @sellmate/api",
+    "prisma:generate": "npm run prisma:generate -w @sellmate/api",
+    "prisma:validate": "npm run prisma:validate -w @sellmate/api",
+    "prisma:migrate": "npm run prisma:migrate -w @sellmate/api",
+    "prisma:deploy": "npm run prisma:deploy -w @sellmate/api",
+    "prisma:studio": "npm run prisma:studio -w @sellmate/api",
+    "db:seed": "npm run db:seed -w @sellmate/api",
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3"
+  }
+}

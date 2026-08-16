@@ -1,0 +1,16 @@
+#!/bin/sh
+# نقطة الدخول: تهيئة قاعدة البيانات ثم تشغيل الخادم.
+# - إن وُجدت ملفات هجرات (prisma/migrations) → نطبّقها بأمان (migrate deploy).
+# - وإلا (أوّل نشر بلا هجرات) → نزامن المخطط مباشرة (db push) لإنشاء الجداول.
+set -e
+
+if [ -d prisma/migrations ] && [ -n "$(ls -A prisma/migrations 2>/dev/null)" ]; then
+  echo "[entrypoint] تطبيق الهجرات (prisma migrate deploy)..."
+  npx prisma migrate deploy
+else
+  echo "[entrypoint] لا توجد هجرات — مزامنة المخطط (prisma db push)..."
+  npx prisma db push --skip-generate --accept-data-loss
+fi
+
+echo "[entrypoint] تشغيل الخادم..."
+exec node dist/main.js

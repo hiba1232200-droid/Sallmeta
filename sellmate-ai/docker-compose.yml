@@ -1,0 +1,75 @@
+# ==========================================================================
+# SellMate AI — بنية إنتاج كاملة على خادم واحد: PostgreSQL + Backend + Frontend
+# التشغيل:
+#   1) cp .env.example .env   واضبط الأسرار (JWT_SECRET, ENCRYPTION_KEY, ...)
+#   2) docker compose up -d --build
+#   3) اللوحة على http://localhost:3000 — الـ API على http://localhost:4000
+# ملاحظة: على Railway لا تُستخدم هذه الملفات؛ تُنشر كل خدمة عبر Dockerfile الخاص بها.
+# ==========================================================================
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sellmate}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sellmate}
+      POSTGRES_DB: ${POSTGRES_DB:-sellmate}
+    volumes:
+      - sellmate_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-sellmate}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./apps/api
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      API_PORT: '4000'
+      DATABASE_URL: postgresql://${POSTGRES_USER:-sellmate}:${POSTGRES_PASSWORD:-sellmate}@postgres:5432/${POSTGRES_DB:-sellmate}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - '4000:4000'
+    volumes:
+      - sellmate_uploads:/app/storage/uploads
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:4000/health']
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  dashboard:
+    build:
+      context: ./apps/dashboard
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
+    restart: unless-stopped
+    environment:
+      PORT: '3000'
+    depends_on:
+      - api
+    ports:
+      - '3000:3000'
+
+  admin:
+    build:
+      context: ./apps/admin
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
+    restart: unless-stopped
+    environment:
+      PORT: '3001'
+    depends_on:
+      - api
+    ports:
+      - '3001:3001'
+
+volumes:
+  sellmate_pg:
+  sellmate_uploads:
