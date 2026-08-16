@@ -75,7 +75,7 @@ export class ProductsController {
         if (isAllowedImageMime(file.mimetype)) {
           cb(null, true);
         } else {
-          cb(new BadRequestException('نوع الملف غير مدعوم (PNG/JPEG/WEBP/GIF فقط)'));
+          cb(new BadRequestException('نوع الملف غير مدعوم (PNG/JPEG/WEBP/GIF فقط)'), false);
         }
       },
     }),
