@@ -81,7 +81,7 @@ export class AnalyticsService {
 
     const ordersByStatus = this.emptyStatusMap();
     for (const row of byStatus) {
-      ordersByStatus[row.status] = row._count?._all ?? 0;
+      ordersByStatus[row.status] = (row._count as { _all: number })._all;
     }
 
     const conversionRate =

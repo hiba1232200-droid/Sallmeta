@@ -57,7 +57,7 @@ export class PlatformAdminService {
 
     const subscriptions: Record<string, number> = {};
     for (const row of subsByStatus) {
-      subscriptions[row.status] = row._count?._all ?? 0;
+      subscriptions[row.status] = (row._count as { _all: number })._all;
     }
 
     return {
@@ -385,16 +385,16 @@ export class PlatformAdminService {
       revenueByTier: revenueByTier.map((r) => ({
         tier: r.planTier ?? 'UNKNOWN',
         total: (r._sum?.amount ?? 0).toString(),
-        count: r._count?._all ?? 0,
+        count: (r._count as { _all: number })._all,
       })),
       subscriptionsByStatus: subsByStatus.map((s) => ({
         status: s.status,
-        count: s._count?._all ?? 0,
+        count: (s._count as { _all: number })._all,
       })),
       topStores: topStoresRaw.map((s) => ({
         merchantId: s.merchantId,
         merchantName: names.get(s.merchantId) ?? '(متجر محذوف)',
-        orders: s._count?._all ?? 0,
+        orders: (s._count as { _all: number })._all,
         sales: (s._sum?.total ?? 0).toString(),
       })),
       last30Days: { newStores, newUsers },
@@ -404,7 +404,7 @@ export class PlatformAdminService {
   // ---------------------------------- أدوات ----------------------------------
 
   /** يبني معامل المؤشّر لـ Prisma (يتخطّى العنصر المرجعي). */
-  private cursor(cursor?: string) {
+  private cursor(cursor?: string): { cursor?: { id: string }; skip?: number } {
     return cursor ? { cursor: { id: cursor }, skip: 1 } : {};
   }
 
