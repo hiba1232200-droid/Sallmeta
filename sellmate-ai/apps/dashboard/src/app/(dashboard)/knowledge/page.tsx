@@ -28,6 +28,9 @@ export default function KnowledgePage() {
   const [form, setForm] = useState<any>({ ...EMPTY });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [importUrl, setImportUrl] = useState('');
+  const [importing, setImporting] = useState(false);
+  const [importMsg, setImportMsg] = useState('');
 
   const load = useCallback(async () => {
     setError('');
@@ -49,6 +52,26 @@ export default function KnowledgePage() {
   const resetForm = () => {
     setForm({ ...EMPTY });
     setEditingId(null);
+  };
+
+  const doImport = async () => {
+    if (!importUrl.trim()) return;
+    setImporting(true);
+    setImportMsg('');
+    setError('');
+    try {
+      const r = await request('/knowledge/import-url', {
+        method: 'POST',
+        body: JSON.stringify({ url: importUrl.trim() }),
+      });
+      setImportMsg(`تم استيراد «${r.title}» (${r.imported} مقطع) من ${r.host}.`);
+      setImportUrl('');
+      load();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setImporting(false);
+    }
   };
 
   const save = async (e: React.FormEvent) => {
@@ -95,6 +118,30 @@ export default function KnowledgePage() {
       />
 
       {error && <p className="mb-4 rounded-lg bg-red-50 p-2 text-sm text-red-600">{error}</p>}
+
+      <Card className="mb-6">
+        <h3 className="mb-1 font-semibold text-slate-900">استيراد من رابط موقعك</h3>
+        <p className="mb-3 text-sm text-slate-500">
+          الصق رابط صفحة من موقعك (مثل «من نحن» أو سياسة الشحن)، ونقرأ محتواها ونضيفه لقاعدة
+          المعرفة ليستخدمه المساعد في الإجابة.
+        </p>
+        {importMsg && (
+          <p className="mb-3 rounded-lg bg-green-50 p-2 text-sm text-green-700">{importMsg}</p>
+        )}
+        <div className="flex gap-2">
+          <Input
+            value={importUrl}
+            onChange={(e) => setImportUrl(e.target.value)}
+            placeholder="https://example.com/about"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') doImport();
+            }}
+          />
+          <Button onClick={doImport} disabled={importing || !importUrl.trim()}>
+            {importing ? '...جارٍ الاستيراد' : 'استيراد'}
+          </Button>
+        </div>
+      </Card>
 
       <Card className="mb-6">
         <form onSubmit={save} className="space-y-4">
