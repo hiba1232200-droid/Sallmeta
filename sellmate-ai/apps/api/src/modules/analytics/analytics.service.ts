@@ -35,7 +35,12 @@ export class AnalyticsService {
       this.prisma.customer.count({ where: { merchantId } }),
       this.prisma.conversation.count({ where: { merchantId, status: { not: 'CLOSED' } } }),
       this.prisma.conversation.count({ where: { merchantId } }),
-      this.prisma.order.groupBy({ by: ['status'], where: { merchantId }, _count: { _all: true } }),
+      this.prisma.order.groupBy({
+        by: ['status'],
+        where: { merchantId },
+        _count: { _all: true },
+        orderBy: { status: 'asc' },
+      }),
       this.prisma.order.aggregate({
         where: { merchantId, status: { not: 'CANCELLED' } },
         _sum: { total: true },
@@ -76,7 +81,7 @@ export class AnalyticsService {
 
     const ordersByStatus = this.emptyStatusMap();
     for (const row of byStatus) {
-      ordersByStatus[row.status] = row._count._all;
+      ordersByStatus[row.status] = row._count?._all ?? 0;
     }
 
     const conversionRate =
@@ -84,8 +89,8 @@ export class AnalyticsService {
 
     const topProducts = topProductsRaw.map((r) => ({
       name: r.productName,
-      quantity: r._sum.quantity ?? 0,
-      revenue: (r._sum.lineTotal ?? 0).toString(),
+      quantity: r._sum?.quantity ?? 0,
+      revenue: (r._sum?.lineTotal ?? 0).toString(),
     }));
 
     const recentConversationsView = recentConversations.map((c) => ({
@@ -244,8 +249,8 @@ export class AnalyticsService {
       activeCustomers,
       topProducts: topProductsRaw.map((r) => ({
         name: r.productName,
-        quantity: r._sum.quantity ?? 0,
-        revenue: (r._sum.lineTotal ?? 0).toString(),
+        quantity: r._sum?.quantity ?? 0,
+        revenue: (r._sum?.lineTotal ?? 0).toString(),
       })),
     };
   }

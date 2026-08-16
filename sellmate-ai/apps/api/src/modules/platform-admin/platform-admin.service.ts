@@ -39,7 +39,11 @@ export class PlatformAdminService {
       this.prisma.merchant.count(),
       this.prisma.merchant.count({ where: { isActive: true } }),
       this.prisma.order.count(),
-      this.prisma.subscription.groupBy({ by: ['status'], _count: { _all: true } }),
+      this.prisma.subscription.groupBy({
+        by: ['status'],
+        _count: { _all: true },
+        orderBy: { status: 'asc' },
+      }),
       this.prisma.payment.aggregate({ where: { status: 'PAID' }, _sum: { amount: true } }),
       this.prisma.usageRecord.aggregate({
         where: { metric: 'AI_MESSAGE', period },
@@ -53,7 +57,7 @@ export class PlatformAdminService {
 
     const subscriptions: Record<string, number> = {};
     for (const row of subsByStatus) {
-      subscriptions[row.status] = row._count._all;
+      subscriptions[row.status] = row._count?._all ?? 0;
     }
 
     return {
@@ -357,8 +361,13 @@ export class PlatformAdminService {
           where: { status: 'PAID' },
           _sum: { amount: true },
           _count: { _all: true },
+          orderBy: { planTier: 'asc' },
         }),
-        this.prisma.subscription.groupBy({ by: ['status'], _count: { _all: true } }),
+        this.prisma.subscription.groupBy({
+          by: ['status'],
+          _count: { _all: true },
+          orderBy: { status: 'asc' },
+        }),
         this.prisma.order.groupBy({
           by: ['merchantId'],
           _count: { _all: true },
@@ -375,18 +384,18 @@ export class PlatformAdminService {
     return {
       revenueByTier: revenueByTier.map((r) => ({
         tier: r.planTier ?? 'UNKNOWN',
-        total: (r._sum.amount ?? 0).toString(),
-        count: r._count._all,
+        total: (r._sum?.amount ?? 0).toString(),
+        count: r._count?._all ?? 0,
       })),
       subscriptionsByStatus: subsByStatus.map((s) => ({
         status: s.status,
-        count: s._count._all,
+        count: s._count?._all ?? 0,
       })),
       topStores: topStoresRaw.map((s) => ({
         merchantId: s.merchantId,
         merchantName: names.get(s.merchantId) ?? '(متجر محذوف)',
-        orders: s._count._all,
-        sales: (s._sum.total ?? 0).toString(),
+        orders: s._count?._all ?? 0,
+        sales: (s._sum?.total ?? 0).toString(),
       })),
       last30Days: { newStores, newUsers },
     };
